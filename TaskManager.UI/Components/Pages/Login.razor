@@ -1,0 +1,51 @@
+﻿@page "/"
+@rendermode InteractiveServer
+@inject NavigationManager Navigation
+@inject AuthService AuthService
+
+<h3>Login</h3>
+
+@if (!string.IsNullOrEmpty(ErrorMessage))
+{
+    <div class="alert alert-danger">@ErrorMessage</div>
+}
+
+<div class="container mt-4">
+    <div class="form-group">
+        <label>Usuário</label>
+        <input class="form-control" @bind="Username" />
+    </div>
+    <div class="form-group">
+        <label>Senha</label>
+        <input type="password" class="form-control" @bind="Password" />
+    </div>
+    <button class="btn btn-primary mt-2" @onclick=LoginUsuario>Entrar</button>
+</div>
+
+@code {
+    private string Username;
+    private string Password;
+    private string ErrorMessage;
+
+    private async Task LoginUsuario()
+    {
+        Console.WriteLine("Tentando logar...");
+        ErrorMessage = string.Empty;
+
+        if (string.IsNullOrWhiteSpace(Username) || string.IsNullOrWhiteSpace(Password))
+        {
+            ErrorMessage = "Preencha todos os campos.";
+            return;
+        }
+
+        var success = await AuthService.LoginAsync(Username, Password);
+        if (success)
+        {
+            Navigation.NavigateTo("/tarefas");
+        }
+        else
+        {
+            ErrorMessage = "Usuário ou senha inválidos.";
+        }
+    }
+}

@@ -1,0 +1,29 @@
+#Ignore pastas e arquivos de build
+bin/
+obj/
+
+#Configurações de usuário do Visual Studio
+.vs/
+*.user
+*.suo
+
+#Arquivos temporários do sistema
+Thumbs.db
+.DS_Store
+
+#arquivos de log
+*.log
+
+#Configurações de publicação
+publish/
+
+#Ignoras appsettings locais 
+appsettings.Development.json
+
+# Pacotes NuGet restaurados localmente
+*.nupkg
+*.snupkg
+
+# Cache do Rider ou VS Code
+.idea/
+.vscode/
