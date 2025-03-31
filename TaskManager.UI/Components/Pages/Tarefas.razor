@@ -1,33 +1,84 @@
 ﻿@page "/tarefas"
 @using TaskManager.UI.Services
 @using TaskManager.Shared
+@rendermode InteractiveServer
 @inject AuthService AuthService
 @inject NavigationManager Navigation
 @inject AppState AppState
 
 <h3>Lista de Tarefas</h3>
 
-@if (!AppState.IsAuthenticated)
-{
-    <p>Redirecionando...</p>
-}
-else if (!carregado)
+@if (!carregado)
 {
     <p>Carregando tarefas...</p>
 }
-else if (!tarefas.Any())
+else if (tarefas.Count == 0)
 {
-    <p>Você não possui tarefas.</p>
+    <p>Nenhuma tarefa encontrada.</p>
 }
 else
 {
-    <div class="container mt-3">
+    <div class="accordion" id="accordionTarefas">
         @foreach (var tarefa in tarefas)
         {
-            <div class="card mb-2">
-                <div class="card-body">
-                    <strong>@tarefa.Titulo</strong><br />
-                    <span>@tarefa.Descricao</span>
+            var tarefaId = $"tarefa-{tarefa.Id}";
+            var isEditando = tarefaEditando?.Id == tarefa.Id;
+
+            <div class="accordion-item mb-2">
+                <h2 class="accordion-header" id="@($"{tarefaId}-header")">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="form-check ms-3">
+                            <input class="form-check-input" type="checkbox" checked="@tarefa.Concluida" disabled />
+                            <label class="form-check-label fw-bold">
+                                @tarefa.Titulo
+                            </label>
+                        </div>
+                        <button class="accordion-button collapsed w-50" type="button" data-bs-toggle="collapse" data-bs-target="#@($"{tarefaId}-body")" aria-expanded="false" aria-controls="@($"{tarefaId}-body")">
+                            Ver detalhes
+                        </button>
+                    </div>
+                </h2>
+                <div id="@($"{tarefaId}-body")" class="accordion-collapse collapse" aria-labelledby="@($"{tarefaId}-header")" data-bs-parent="#accordionTarefas">
+                    <div class="accordion-body">
+                        @if (isEditando)
+                        {
+                            <div>
+                                <div class="mb-2">
+                                    <label>Título:</label>
+                                    <input class="form-control" @bind="tarefaEditando.Titulo" />
+                                </div>
+                                <div class="mb-2">
+                                    <label>Descrição:</label>
+                                    <textarea class="form-control" @bind="tarefaEditando.Descricao"></textarea>
+                                </div>
+                                <div class="mb-2">
+                                    <label>Dificuldade:</label>
+                                    <input class="form-control" @bind="tarefaEditando.Dificuldade" />
+                                </div>
+                                <div class="mb-2">
+                                    <label>Data de Entrega:</label>
+                                    <input type="date" class="form-control" @bind="tarefaEditando.DataEntrega" />
+                                </div>
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" @bind="tarefaEditando.Concluida" />
+                                    <label class="form-check-label">Concluída</label>
+                                </div>
+
+                                <button class="btn btn-success me-2" @onclick="SalvarEdicao">Salvar</button>
+                                <button class="btn btn-secondary" @onclick="CancelarEdicao">Cancelar</button>
+                            </div>
+                        }
+                        else
+                        {
+                            <p><strong>Descrição:</strong> @tarefa.Descricao</p>
+                            <p><strong>Data de Entrega:</strong> @(tarefa.DataEntrega?.ToString("dd/MM/yyyy") ?? "Não definida")</p>
+                            <p><strong>Dificuldade:</strong> @tarefa.Dificuldade</p>
+                            <p><strong>Status:</strong> @(tarefa.Concluida ? "Concluída" : "Pendente")</p>
+
+                            <button class="btn btn-outline-primary me-2" @onclick="@(() => EditarTarefa(tarefa))">Editar</button>
+                            <button class="btn btn-outline-danger" @onclick="@(() => ApagarTarefa(tarefa.Id))">Apagar</button>
+                        }
+                    </div>
                 </div>
             </div>
         }
@@ -35,21 +86,83 @@ else
 }
 
 @code {
- 
     private List<Tarefa> tarefas = new();
     private bool carregado = false;
 
+    private Tarefa? tarefaEditando;
+
     protected override async Task OnInitializedAsync()
     {
-        // Verifica se o usuário está autenticado antes de permitir acesso à página
         if (!AppState.IsAuthenticated)
         {
-            Navigation.NavigateTo("/");  // Redireciona imediatamente para o login
+            Navigation.NavigateTo("/");
             return;
         }
 
-        // Carrega as tarefas se o usuário estiver autenticado
         tarefas = await AuthService.GetTarefasAsync();
         carregado = true;
     }
+
+    private void EditarTarefa(Tarefa tarefa)
+    {
+        tarefaEditando = new Tarefa
+            {
+                Id = tarefa.Id,
+                Titulo = tarefa.Titulo,
+                Descricao = tarefa.Descricao,
+                Dificuldade = tarefa.Dificuldade,
+                DataEntrega = tarefa.DataEntrega,
+                Concluida = tarefa.Concluida,
+                ResponsavelId = tarefa.ResponsavelId
+            };
+    }
+
+    private void CancelarEdicao()
+    {
+        tarefaEditando = null;
+    }
+
+    private async Task SalvarEdicao()
+    {
+        if (tarefaEditando is not null)
+        {
+            var sucesso = await AuthService.UpdateTarefaAsync(tarefaEditando);
+
+            if (sucesso)
+            {
+                // Atualiza a tarefa na lista local
+                var index = tarefas.FindIndex(t => t.Id == tarefaEditando.Id);
+                if (index >= 0)
+                {
+                    tarefas[index] = tarefaEditando;
+                }
+
+                tarefaEditando = null;
+            }
+            else
+            {
+                await JS.InvokeVoidAsync("alert", "Erro ao salvar tarefa.");
+            }
+        }
+    }
+
+    private async Task ApagarTarefa(int id)
+    {
+        var confirmar = await JS.InvokeAsync<bool>("confirm", "Tem certeza que deseja apagar esta tarefa?");
+        if (confirmar)
+        {
+            var sucesso = await AuthService.DeleteTarefaAsync(id);
+
+            if (sucesso)
+            {
+                tarefas = tarefas.Where(t => t.Id != id).ToList();
+            }
+            else
+            {
+                await JS.InvokeVoidAsync("alert", "Erro ao apagar tarefa.");
+            }
+        }
+    }
+
+    [Inject] IJSRuntime JS { get; set; }
 }

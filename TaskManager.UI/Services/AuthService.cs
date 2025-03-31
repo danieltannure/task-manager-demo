@@ -40,4 +40,27 @@ public class AuthService
         var response = await _http.GetFromJsonAsync<List<Tarefa>>("https://localhost:7067/api/tarefas");
         return response ?? new List<Tarefa>();
     }
+    public async Task<bool> UpdateTarefaAsync(Tarefa tarefa)
+    {
+        var tarefaDto = new
+        {
+            tarefa.Id,
+            tarefa.Titulo,
+            tarefa.Descricao,
+            tarefa.DataEntrega,
+            tarefa.Dificuldade,
+            tarefa.Concluida,
+            tarefa.ResponsavelId
+        };
+
+        var response = await _http.PutAsJsonAsync($"api/tarefas/{tarefa.Id}", tarefaDto);
+        return response.IsSuccessStatusCode;
+    }
+
+    public async Task<bool> DeleteTarefaAsync(int id)
+    {
+        var response = await _http.DeleteAsync($"api/tarefas/{id}");
+        return response.IsSuccessStatusCode;
+    }
+
 }
