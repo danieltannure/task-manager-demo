@@ -1,12 +1,14 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using TaskManager.UI.Components;
+using TaskManager.UI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Registrar o AppState como um singleton
+builder.Services.AddSingleton<AppState>(); 
 
 var apiBaseUrl = builder.Configuration["ApiSettings:BaseUrl"];
-
 
 builder.Services.AddHttpClient<AuthService>(client =>
 {

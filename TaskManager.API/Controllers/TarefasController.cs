@@ -1,28 +1,26 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TaskManager.API.Data;
-using TaskManager.Shared;
+
 
 namespace TaskManager.API.Controllers
 {
-    [ApiController]
     [Route("api/[controller]")]
-    public class TarefaController : ControllerBase
+    [ApiController]
+    public class TarefasController : ControllerBase
     {
         private readonly TaskManagerContext _context;
 
-        public TarefaController(TaskManagerContext context)
+        public TarefasController(TaskManagerContext context)
         {
             _context = context;
         }
 
+        // Endpoint para obter todas as tarefas
         [HttpGet]
-        public async Task<IActionResult> Get()
+        public async Task<IActionResult> GetTarefas()
         {
-            var tarefas = await _context.Tarefas
-                .Include(t => t.Responsavel)
-                .ToListAsync();
-
+            var tarefas = await _context.Tarefas.ToListAsync();
             return Ok(tarefas);
         }
     }

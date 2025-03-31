@@ -1,7 +1,9 @@
 ﻿@page "/"
+@using TaskManager.UI.Services
 @rendermode InteractiveServer
 @inject NavigationManager Navigation
 @inject AuthService AuthService
+@inject AppState appState
 
 <h3>Login</h3>
 
@@ -19,17 +21,17 @@
         <label>Senha</label>
         <input type="password" class="form-control" @bind="Password" />
     </div>
-    <button class="btn btn-primary mt-2" @onclick=LoginUsuario>Entrar</button>
+    <button class="btn btn-primary mt-2" @onclick="LoginUsuario">Entrar</button>
 </div>
 
 @code {
+	
     private string Username;
     private string Password;
     private string ErrorMessage;
 
     private async Task LoginUsuario()
     {
-        Console.WriteLine("Tentando logar...");
         ErrorMessage = string.Empty;
 
         if (string.IsNullOrWhiteSpace(Username) || string.IsNullOrWhiteSpace(Password))
@@ -41,6 +43,7 @@
         var success = await AuthService.LoginAsync(Username, Password);
         if (success)
         {
+            appState.SetAuthentication(true);
             Navigation.NavigateTo("/tarefas");
         }
         else

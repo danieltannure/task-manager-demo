@@ -27,7 +27,7 @@ namespace TaskManager.Shared
         [Column("data_entrega")]
         public DateTime? DataEntrega { get; set; }
 
-        [Column("responsavelId")]
+        [Column("responsavel_id")]
         public int? ResponsavelId { get; set; }
 
         [Column("dificuldade")]

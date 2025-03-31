@@ -1,6 +1,55 @@
 ﻿@page "/tarefas"
-<h3>Tarefas</h3>
+@using TaskManager.UI.Services
+@using TaskManager.Shared
+@inject AuthService AuthService
+@inject NavigationManager Navigation
+@inject AppState AppState
+
+<h3>Lista de Tarefas</h3>
+
+@if (!AppState.IsAuthenticated)
+{
+    <p>Redirecionando...</p>
+}
+else if (!carregado)
+{
+    <p>Carregando tarefas...</p>
+}
+else if (!tarefas.Any())
+{
+    <p>Você não possui tarefas.</p>
+}
+else
+{
+    <div class="container mt-3">
+        @foreach (var tarefa in tarefas)
+        {
+            <div class="card mb-2">
+                <div class="card-body">
+                    <strong>@tarefa.Titulo</strong><br />
+                    <span>@tarefa.Descricao</span>
+                </div>
+            </div>
+        }
+    </div>
+}
 
 @code {
+ 
+    private List<Tarefa> tarefas = new();
+    private bool carregado = false;
 
+    protected override async Task OnInitializedAsync()
+    {
+        // Verifica se o usuário está autenticado antes de permitir acesso à página
+        if (!AppState.IsAuthenticated)
+        {
+            Navigation.NavigateTo("/");  // Redireciona imediatamente para o login
+            return;
+        }
+
+        // Carrega as tarefas se o usuário estiver autenticado
+        tarefas = await AuthService.GetTarefasAsync();
+        carregado = true;
+    }
 }

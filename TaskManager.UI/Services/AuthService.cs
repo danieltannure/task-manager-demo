@@ -1,13 +1,15 @@
 ﻿using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 using TaskManager.Shared;
 
+namespace TaskManager.UI.Services;
 public class AuthService
 {
     private readonly HttpClient _http;
     public bool IsAuthenticated { get; private set; }
-    public Usuario UsuarioAtual { get; private set; }
+    public Usuario? UsuarioAtual { get; private set; }
 
     public AuthService(HttpClient http)
     {
@@ -18,6 +20,8 @@ public class AuthService
     {
         var loginRequest = new LoginRequest { Username = username, Password = password };
         var response = await _http.PostAsJsonAsync("api/auth/login", loginRequest);
+
+        Console.WriteLine($"Resposta do login: {response.StatusCode}");
 
         if (response.IsSuccessStatusCode)
         {
@@ -32,15 +36,8 @@ public class AuthService
 
     public async Task<List<Tarefa>> GetTarefasAsync()
     {
-        if (!IsAuthenticated)
-            return new List<Tarefa>();
-
-        return await _http.GetFromJsonAsync<List<Tarefa>>("api/tarefa");
-    }
-
-    public void Logout()
-    {
-        IsAuthenticated = false;
-        UsuarioAtual = null;
+        // Alteração da URL para corresponder à API
+        var response = await _http.GetFromJsonAsync<List<Tarefa>>("https://localhost:7067/api/tarefas");
+        return response ?? new List<Tarefa>();
     }
 }
