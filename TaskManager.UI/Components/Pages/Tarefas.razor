@@ -12,97 +12,147 @@
 {
     <p>Carregando tarefas...</p>
 }
-else if (tarefas.Count == 0)
-{
-    <p>Nenhuma tarefa encontrada.</p>
-}
 else
 {
-    <div class="accordion" id="accordionTarefas">
-        @foreach (var tarefa in tarefas)
-        {
-            var tarefaId = $"tarefa-{tarefa.Id}";
-            var isEditando = tarefaEditando?.Id == tarefa.Id;
+    <div class="row mb-3">
+        <div class="col-md-4 mb-2">
+            <input type="text"
+            class="form-control"
+            placeholder="Buscar por título..."
+            @bind-value="termoBusca"
+            @bind-value:event="oninput" />
+        </div>
 
-            <div class="accordion-item mb-2">
-                <h2 class="accordion-header" id="@($"{tarefaId}-header")">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div class="form-check ms-3">
-                            <input class="form-check-input" type="checkbox" checked="@tarefa.Concluida" disabled />
-                            <label class="form-check-label fw-bold">
-                                @tarefa.Titulo
-                            </label>
-                        </div>
-                        <button class="accordion-button collapsed w-50" type="button" data-bs-toggle="collapse" data-bs-target="#@($"{tarefaId}-body")" aria-expanded="false" aria-controls="@($"{tarefaId}-body")">
-                            Ver detalhes
-                        </button>
-                    </div>
-                </h2>
-                <div id="@($"{tarefaId}-body")" class="accordion-collapse collapse" aria-labelledby="@($"{tarefaId}-header")" data-bs-parent="#accordionTarefas">
-                    <div class="accordion-body">
-                        @if (isEditando)
-                        {
-                            <div>
-                                <div class="mb-2">
-                                    <label>Título:</label>
-                                    <input class="form-control" @bind="tarefaEditando.Titulo" />
-                                </div>
-                                <div class="mb-2">
-                                    <label>Descrição:</label>
-                                    <textarea class="form-control" @bind="tarefaEditando.Descricao"></textarea>
-                                </div>
-                                <div class="mb-2">
-                                    <label>Dificuldade:</label>
-                                    <input class="form-control" @bind="tarefaEditando.Dificuldade" />
-                                </div>
-                                <div class="mb-2">
-                                    <label>Data de Entrega:</label>
-                                    <input type="date" class="form-control" @bind="tarefaEditando.DataEntrega" />
-                                </div>
-                                <div class="form-check mb-3">
-                                    <input class="form-check-input" type="checkbox" @bind="tarefaEditando.Concluida" />
-                                    <label class="form-check-label">Concluída</label>
-                                </div>
+        <div class="col-md-3 mb-2">
+            <select class="form-select" @bind="filtroDificuldade">
+                <option value="">Todas as dificuldades</option>
+                <option value="Baixa">Baixa</option>
+                <option value="Média">Média</option>
+                <option value="Alta">Alta</option>
+            </select>
+        </div>
 
-                                <button class="btn btn-success me-2" @onclick="SalvarEdicao">Salvar</button>
-                                <button class="btn btn-secondary" @onclick="CancelarEdicao">Cancelar</button>
+        <div class="col-md-3 mb-2">
+            <select class="form-select" @bind="filtroStatus">
+                <option value="">Todos os status</option>
+                <option value="pendente">Pendente</option>
+                <option value="concluida">Concluída</option>
+            </select>
+        </div>
+
+        <div class="col-md-4 mb-2">
+            <select class="form-select" @bind="filtroResponsavelId">
+                <option value="0">Todos os responsáveis</option>
+                @foreach (var user in usuarios)
+                {
+                    <option value="@user.Id">@user.Username</option>
+                }
+            </select>
+        </div>
+
+    </div>
+
+    @if (!TarefasFiltradas.Any())
+    {
+        <p>Nenhuma tarefa encontrada.</p>
+    }
+    else
+    {
+        <div class="accordion" id="accordionTarefas">
+            @foreach (var tarefa in TarefasFiltradas)
+            {
+                var tarefaId = $"tarefa-{tarefa.Id}";
+                var isEditando = tarefaEditando?.Id == tarefa.Id;
+
+                <div class="accordion-item mb-2">
+                    <h2 class="accordion-header" id="@($"{tarefaId}-header")">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="form-check ms-3">
+                                <input class="form-check-input"
+                                       type="checkbox"
+                                       checked="@tarefa.Concluida"
+                                       @onchange="(e => AlterarStatusTarefa(tarefa, e.Value))"
+                                       disabled="@(AppState.IsAdmin == false)" />
+                                <label class="form-check-label fw-bold">
+                                    @tarefa.Titulo
+                                </label>
                             </div>
-                        }
-                        else
-                        {
-                            <p><strong>Descrição:</strong> @tarefa.Descricao</p>
-                            <p><strong>Data de Entrega:</strong> @(tarefa.DataEntrega?.ToString("dd/MM/yyyy") ?? "Não definida")</p>
-                            <p><strong>Dificuldade:</strong> @tarefa.Dificuldade</p>
-                            <p><strong>Status:</strong> @(tarefa.Concluida ? "Concluída" : "Pendente")</p>
+                            <button class="accordion-button collapsed w-50" type="button" data-bs-toggle="collapse" data-bs-target="#@($"{tarefaId}-body")" aria-expanded="false" aria-controls="@($"{tarefaId}-body")">
+                                Ver detalhes
+                            </button>
+                        </div>
+                    </h2>
 
-                            <button class="btn btn-outline-primary me-2" @onclick="@(() => EditarTarefa(tarefa))">Editar</button>
-                            <button class="btn btn-outline-danger" @onclick="@(() => ApagarTarefa(tarefa.Id))">Apagar</button>
-                        }
+                    <div id="@($"{tarefaId}-body")" class="accordion-collapse collapse" aria-labelledby="@($"{tarefaId}-header")" data-bs-parent="#accordionTarefas">
+                        <div class="accordion-body">
+                            @if (isEditando)
+                            {
+                                <div>
+                                    <div class="mb-2">
+                                        <label>Título:</label>
+                                        <input class="form-control" @bind="tarefaEditando.Titulo" />
+                                    </div>
+                                    <div class="mb-2">
+                                        <label>Descrição:</label>
+                                        <textarea class="form-control" @bind="tarefaEditando.Descricao"></textarea>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label>Dificuldade:</label>
+                                        <input class="form-control" @bind="tarefaEditando.Dificuldade" />
+                                    </div>
+                                    <div class="mb-2">
+                                        <label>Data de Entrega:</label>
+                                        <input type="date" class="form-control" @bind="tarefaEditando.DataEntrega" />
+                                    </div>
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="checkbox" @bind="tarefaEditando.Concluida" />
+                                        <label class="form-check-label">Concluída</label>
+                                    </div>
+
+                                    @if (AppState.IsAdmin)
+                                    {
+                                        <button class="btn btn-success me-2" @onclick="SalvarEdicao">Salvar</button>
+                                        <button class="btn btn-secondary" @onclick="CancelarEdicao">Cancelar</button>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <p><strong>Descrição:</strong> @tarefa.Descricao</p>
+                                <p><strong>Data de Entrega:</strong> @(tarefa.DataEntrega?.ToString("dd/MM/yyyy") ?? "Não definida")</p>
+                                <p><strong>Dificuldade:</strong> @tarefa.Dificuldade</p>
+
+                                @if (AppState.IsAdmin)
+                                {
+                                    <button class="btn btn-outline-primary me-2" @onclick="@(() => EditarTarefa(tarefa))">Editar</button>
+                                }
+
+                                <button class="btn btn-outline-danger" @onclick="@(() => ApagarTarefa(tarefa.Id))">Apagar</button>
+                            }
+                        </div>
                     </div>
                 </div>
+            }
+        </div>
+
+        @if (AppState.IsAdmin)
+        {
+            <div class="mt-3">
+                <button class="btn btn-success" @onclick="SalvarAlteracoesConcluidas" disabled="@(!tarefasModificadas.Any())">
+                    Salvar Alterações
+                </button>
             </div>
         }
-    </div>
+    }
 }
 
 @code {
     private List<Tarefa> tarefas = new();
     private bool carregado = false;
 
+    //Edições (admin)
     private Tarefa? tarefaEditando;
-
-    protected override async Task OnInitializedAsync()
-    {
-        if (!AppState.IsAuthenticated)
-        {
-            Navigation.NavigateTo("/");
-            return;
-        }
-
-        tarefas = await AuthService.GetTarefasAsync();
-        carregado = true;
-    }
-
+    private List<Tarefa> tarefasModificadas = new();
     private void EditarTarefa(Tarefa tarefa)
     {
         tarefaEditando = new Tarefa
@@ -162,6 +212,73 @@ else
                 await JS.InvokeVoidAsync("alert", "Erro ao apagar tarefa.");
             }
         }
+    }
+
+    private void AlterarStatusTarefa(Tarefa tarefa, object? valor)
+    {
+        if (valor is bool novaConclusao)
+        {
+            tarefa.Concluida = novaConclusao;
+
+            if (!tarefasModificadas.Any(t => t.Id == tarefa.Id))
+            {
+                tarefasModificadas.Add(tarefa);
+            }
+        }
+    }
+
+    private async Task SalvarAlteracoesConcluidas()
+    {
+        bool erro = false;
+
+        foreach (var tarefa in tarefasModificadas)
+        {
+            var sucesso = await AuthService.UpdateTarefaAsync(tarefa);
+            if (!sucesso)
+            {
+                erro = true;
+            }
+        }
+
+        tarefasModificadas.Clear();
+
+        if (erro)
+            await JS.InvokeVoidAsync("alert", "Algumas alterações não foram salvas.");
+        else
+            await JS.InvokeVoidAsync("alert", "Alterações salvas com sucesso.");
+    }
+
+
+    //Filtros
+    private string filtroDificuldade = string.Empty;
+    private string filtroStatus = string.Empty;
+    private int filtroResponsavelId = 0;
+    private List<Usuario> usuarios = new();
+    private string termoBusca = string.Empty;
+
+    private IEnumerable<Tarefa> TarefasFiltradas =>
+    tarefas.Where(t =>
+        (string.IsNullOrWhiteSpace(termoBusca) || t.Titulo.Contains(termoBusca, StringComparison.OrdinalIgnoreCase)) &&
+        (string.IsNullOrWhiteSpace(filtroDificuldade) || t.Dificuldade.Equals(filtroDificuldade, StringComparison.OrdinalIgnoreCase)) &&
+        (string.IsNullOrWhiteSpace(filtroStatus) ||
+            (filtroStatus == "concluida" && t.Concluida) ||
+            (filtroStatus == "pendente" && !t.Concluida)) &&
+        (filtroResponsavelId == 0 || t.ResponsavelId == filtroResponsavelId)
+    );
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!AppState.IsAuthenticated)
+        {
+            Navigation.NavigateTo("/");
+            return;
+        }
+
+        var id = AppState.IsAdmin ? 0 : AppState.UsuarioLogado?.Id ?? 0;
+        tarefas = await AuthService.GetTarefasAsync(id);
+        usuarios = await AuthService.GetUsuariosAsync();
+        carregado = true;
     }
 
     [Inject] IJSRuntime JS { get; set; }

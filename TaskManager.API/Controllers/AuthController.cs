@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using TaskManager.API.Data;
 using TaskManager.Shared;
 
@@ -35,6 +36,23 @@ namespace TaskManager.API.Controllers
 
         }
 
+        
+
+
+        [HttpGet("usuarios")]
+        public IActionResult ListarUsuarios()
+        {
+            var usuarios = _context.Usuarios
+                .Select(u => new Usuario
+                {
+                    Id = u.Id,
+                    Username = u.Username
+                }).ToList();
+
+            return Ok(usuarios);
+        }
+
+        //DEBUG: Método para verificar se a API está ativa
         [HttpGet("ping")]
         public IActionResult Ping()
         {

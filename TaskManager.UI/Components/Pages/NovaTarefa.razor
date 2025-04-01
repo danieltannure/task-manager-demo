@@ -1,0 +1,97 @@
+﻿@page "/novatarefa"
+@rendermode InteractiveServer
+@using TaskManager.UI.Services
+@using TaskManager.Shared
+@inject AuthService AuthService
+@inject NavigationManager Navigation
+@inject AppState AppState
+
+<h3>Nova Tarefa</h3>
+
+@if (!carregado)
+{
+    <p>Carregando dados...</p>
+}
+else
+{
+    <EditForm Model="novaTarefa" OnValidSubmit="SalvarTarefa">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="mb-3">
+            <label for="titulo" class="form-label">Título</label>
+            <InputText id="titulo" class="form-control" @bind-Value="novaTarefa.Titulo" />
+        </div>
+
+        <div class="mb-3">
+            <label for="descricao" class="form-label">Descrição</label>
+            <InputTextArea id="descricao" class="form-control" @bind-Value="novaTarefa.Descricao" />
+        </div>
+
+        <div class="mb-3">
+            <label for="dataEntrega" class="form-label">Data de Entrega</label>
+            <InputDate id="dataEntrega" class="form-control" @bind-Value="novaTarefa.DataEntrega" />
+        </div>
+
+        <div class="mb-3">
+            <label for="responsavel" class="form-label">Responsável</label>
+            <InputSelect id="responsavel" class="form-select" @bind-Value="novaTarefa.ResponsavelId">
+                <option value="">Selecione...</option>
+                @foreach (var user in usuarios)
+                {
+                    <option value="@user.Id">@user.Username</option>
+                }
+            </InputSelect>
+        </div>
+
+        <div class="mb-3">
+            <label for="dificuldade" class="form-label">Dificuldade</label>
+            <InputSelect id="dificuldade" class="form-select" @bind-Value="novaTarefa.Dificuldade">
+                <option value="">Selecione a dificuldade</option>
+                <option value="Baixa">Baixa</option>
+                <option value="Média">Média</option>
+                <option value="Alta">Alta</option>
+            </InputSelect>
+        </div>
+
+        <button class="btn btn-success" type="submit">Criar Tarefa</button>
+    </EditForm>
+}
+
+@code {
+    private Tarefa novaTarefa = new()
+        {
+            Concluida = false // valor padrão
+        };
+
+    private List<Usuario> usuarios = new();
+    private bool carregado = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!AppState.IsAuthenticated)
+        {
+            Navigation.NavigateTo("/");
+            return;
+        }
+
+        usuarios = await AuthService.GetUsuariosAsync(); // método que vamos criar
+        carregado = true;
+    }
+
+    private async Task SalvarTarefa()
+    {
+        var sucesso = await AuthService.CriarTarefaAsync(novaTarefa);
+        if (sucesso)
+        {
+            Navigation.NavigateTo("/tarefas");
+        }
+        else
+        {
+            await JS.InvokeVoidAsync("alert", "Erro ao criar tarefa.");
+        }
+    }
+
+    [Inject] IJSRuntime JS { get; set; }
+}
+

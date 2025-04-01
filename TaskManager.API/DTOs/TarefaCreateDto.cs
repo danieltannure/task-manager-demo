@@ -1,13 +1,17 @@
-﻿namespace TaskManager.API.DTOs
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace TaskManager.API.DTOs
 {
-    public class TarefaDto
+    public class TarefaCreateDto
     {
-        public int Id { get; set; } 
-        public string Titulo { get; set; } 
+        [Required]
+        public string Titulo { get; set; }
         public string Descricao { get; set; }
         public DateTime? DataEntrega { get; set; }
+        [Required]
         public string Dificuldade { get; set; }
         public bool Concluida { get; set; }
+        [Required]
         public int? ResponsavelId { get; set; }
     }
 }

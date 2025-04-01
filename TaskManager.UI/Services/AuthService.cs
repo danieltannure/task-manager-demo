@@ -16,7 +16,7 @@ public class AuthService
         _http = http;
     }
 
-    public async Task<bool> LoginAsync(string username, string password)
+    public async Task<Usuario?> LoginAsync(string username, string password)
     {
         var loginRequest = new LoginRequest { Username = username, Password = password };
         var response = await _http.PostAsJsonAsync("api/auth/login", loginRequest);
@@ -25,19 +25,41 @@ public class AuthService
 
         if (response.IsSuccessStatusCode)
         {
-            UsuarioAtual = await response.Content.ReadFromJsonAsync<Usuario>();
+            var usuario = await response.Content.ReadFromJsonAsync<Usuario>();
             IsAuthenticated = true;
-            return true;
+            UsuarioAtual = usuario;
+            return usuario;
         }
 
         IsAuthenticated = false;
-        return false;
+        UsuarioAtual = null;
+        return null;
+    }
+    public async Task<bool> CriarTarefaAsync(Tarefa novaTarefa)
+    {
+        var tarefaDto = new
+        {
+            novaTarefa.Titulo,
+            novaTarefa.Descricao,
+            novaTarefa.DataEntrega,
+            novaTarefa.Dificuldade,
+            novaTarefa.ResponsavelId,
+            Concluida = false // sempre começa como falso
+        };
+
+        var response = await _http.PostAsJsonAsync("api/tarefas", tarefaDto);
+        return response.IsSuccessStatusCode;
     }
 
-    public async Task<List<Tarefa>> GetTarefasAsync()
+    public async Task<List<Usuario>> GetUsuariosAsync()
     {
-        // Alteração da URL para corresponder à API
-        var response = await _http.GetFromJsonAsync<List<Tarefa>>("https://localhost:7067/api/tarefas");
+        var response = await _http.GetFromJsonAsync<List<Usuario>>("api/auth/usuarios");
+        return response ?? new List<Usuario>();
+    }
+
+    public async Task<List<Tarefa>> GetTarefasAsync(int idUsuario)
+    {
+        var response = await _http.GetFromJsonAsync<List<Tarefa>>($"api/tarefas?idUsuario={idUsuario}");
         return response ?? new List<Tarefa>();
     }
     public async Task<bool> UpdateTarefaAsync(Tarefa tarefa)

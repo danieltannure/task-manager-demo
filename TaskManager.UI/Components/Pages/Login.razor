@@ -40,10 +40,11 @@
             return;
         }
 
-        var success = await AuthService.LoginAsync(Username, Password);
-        if (success)
+        var usuario = await AuthService.LoginAsync(Username, Password);
+
+        if (usuario != null)
         {
-            appState.SetAuthentication(true);
+            appState.SetUsuario(usuario); // ← agora salva ID, nome, etc.
             Navigation.NavigateTo("/tarefas");
         }
         else

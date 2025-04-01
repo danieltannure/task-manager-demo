@@ -1,0 +1,18 @@
+﻿@rendermode InteractiveServer
+@using TaskManager.UI.Services
+@inject NavigationManager Navigation
+@inject AppState AppState
+
+<button class="nav-link btn btn-link text-start w-100" @onclick="Logout">
+    <span class="bi bi-box-arrow-right" aria-hidden="true"></span> Sair
+</button>
+
+@code {
+    private void Logout()
+    {
+        Console.WriteLine("Logout chamado.");
+        AppState.LimparUsuario();
+        AppState.SetAuthentication(false);
+        Navigation.NavigateTo("/", forceLoad: true);
+    }
+}

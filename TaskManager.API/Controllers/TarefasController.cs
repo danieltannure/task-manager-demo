@@ -20,9 +20,18 @@ namespace TaskManager.API.Controllers
 
         // Endpoint para obter todas as tarefas
         [HttpGet]
-        public async Task<IActionResult> GetTarefas()
+        public async Task<IActionResult> GetTarefas([FromQuery] int idUsuario)
         {
-            var tarefas = await _context.Tarefas.ToListAsync();
+            if (idUsuario == 0) // admin
+            {
+                var todas = await _context.Tarefas.ToListAsync();
+                return Ok(todas);
+            }
+
+            var tarefas = await _context.Tarefas
+                .Where(t => t.ResponsavelId == idUsuario)
+                .ToListAsync();
+
             return Ok(tarefas);
         }
 
@@ -67,6 +76,32 @@ namespace TaskManager.API.Controllers
             await _context.SaveChangesAsync();
 
             return NoContent();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CriarTarefa([FromBody] TarefaCreateDto dto)
+        {
+            if (string.IsNullOrWhiteSpace(dto.Titulo) ||
+                string.IsNullOrWhiteSpace(dto.Dificuldade) ||
+                dto.ResponsavelId == null)
+            {
+                return BadRequest("Campos obrigatórios não preenchidos.");
+            }
+
+            var novaTarefa = new Tarefa
+            {
+                Titulo = dto.Titulo,
+                Descricao = dto.Descricao,
+                DataEntrega = dto.DataEntrega,
+                Dificuldade = dto.Dificuldade,
+                ResponsavelId = dto.ResponsavelId,
+                Concluida = false
+            };
+
+            _context.Tarefas.Add(novaTarefa);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction(nameof(GetTarefas), new { id = novaTarefa.Id }, novaTarefa);
         }
 
     }
