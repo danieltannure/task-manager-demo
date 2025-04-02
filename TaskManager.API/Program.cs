@@ -6,14 +6,14 @@ using TaskManager.API.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Injeção do DbContext com string de conexão do appsettings.json
+// Define a conexão do banco de dados
 builder.Services.AddDbContext<TaskManagerContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Controllers com atributos [ApiController]
 builder.Services.AddControllers();
 
-// CORS liberado para frontend (ex: Blazor)
+// CORS liberado para frontend Blazor
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(builder =>

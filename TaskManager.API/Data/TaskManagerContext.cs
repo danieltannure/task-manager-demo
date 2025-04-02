@@ -17,7 +17,7 @@ namespace TaskManager.API.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // Mapeia os nomes das tabelas do banco explicitamente
+            // Mapeia os nomes das tabelas
             modelBuilder.Entity<Usuario>().ToTable("usuarios");
             modelBuilder.Entity<Tarefa>().ToTable("tarefas");
         }

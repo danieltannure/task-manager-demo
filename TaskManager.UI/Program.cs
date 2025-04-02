@@ -6,10 +6,11 @@ using TaskManager.UI.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 // Registrar o AppState como um singleton
-builder.Services.AddSingleton<AppState>(); 
+builder.Services.AddSingleton<AppState>();
 
 var apiBaseUrl = builder.Configuration["ApiSettings:BaseUrl"];
 
+// Redireciona para o client da API
 builder.Services.AddHttpClient<AuthService>(client =>
 {
     client.BaseAddress = new Uri(apiBaseUrl);
@@ -17,6 +18,7 @@ builder.Services.AddHttpClient<AuthService>(client =>
 
 
 
+// Inclui o framework Blazor
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
