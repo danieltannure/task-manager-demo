@@ -1,8 +1,8 @@
-<<<<<<< HEAD
+
 ﻿# TaskManager
 =======
 # TaskManager
->>>>>>> 32525f02b6d9e4893c93860bff5d8128c045e26a
+
 
   
 
