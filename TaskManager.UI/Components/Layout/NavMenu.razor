@@ -3,36 +3,39 @@
 @inject NavigationManager Navigation
 @inject AppState AppState
 
-<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">TaskManager.UI</a>
-    </div>
-</div>
+<div class="d-flex flex-column align-items-center p-3 bg-light text-white min-vh-100">
 
-<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+    <img src="images/home_logo_icad.png" alt="Logo" class="img-fluid mb-3" style="max-height: 80px;" />
 
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
+
+    <h4 class="text-center mb-4 text-dark text-nowrap fs-5">Task Manager Demo</h4>
+
+
+    <input type="checkbox" title="Navigation menu" class="navbar-toggler d-none" />
+
+
+    <nav class="w-100 d-flex flex-column">
+        <div class="w-100 px-4 mb-2">
+            @if (!AppState.IsAuthenticated)
+            {
+                <NavItem Href="/" Text="Home" Icon="bi bi-house-fill" Match="NavLinkMatch.All" />
+            }
+            else
+            {
+                <NavItem Href="/tarefas" Text="Lista de Tarefas" Icon="bi bi-list-check" Match="NavLinkMatch.All" />
+            }
+            
         </div>
-        }
+
         @if (AppState.IsAuthenticated)
         {
-            <div class="nav-item px-3">
-                <NavLink class="nav-link" href="/novatarefa">
-                    <span class="bi bi-plus-circle" aria-hidden="true"></span> Nova Tarefa
-                </NavLink>
-            </div>
-            <div class="nav-item px-3">
-                <LogoutButton />
+            <div class="w-100 px-4 mb-2">
+                <NavItem Href="/novatarefa" Text="Nova Tarefa" Icon="bi bi-clipboard-plus" />
             </div>
 
+            <div class="w-100 px-4 mb-2">
+                <LogoutButton />
+            </div>
         }
     </nav>
 </div>
-
-
-

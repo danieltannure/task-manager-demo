@@ -5,63 +5,67 @@
 @inject AuthService AuthService
 @inject NavigationManager Navigation
 @inject AppState AppState
+@inject IJSRuntime JS
 
-<h3>Nova Tarefa</h3>
+<div class="d-flex justify-content-center align-items-center vh-100 bg-light">
+    <div class="card shadow p-5" style="width: 100%; max-width: 600px;">
+        <h4 class="text-start text-muted mb-4">Nova Tarefa</h4>
 
-@if (!carregado)
-{
-    <p>Carregando dados...</p>
-}
-else
-{
-    <EditForm Model="novaTarefa" OnValidSubmit="SalvarTarefa">
-        <DataAnnotationsValidator />
-        <ValidationSummary />
+        @if (!carregado)
+        {
+            <p>Carregando dados...</p>
+        }
+        else
+        {
+            <EditForm Model="novaTarefa" OnValidSubmit="SalvarTarefa">
+           
 
-        <div class="mb-3">
-            <label for="titulo" class="form-label">Título</label>
-            <InputText id="titulo" class="form-control" @bind-Value="novaTarefa.Titulo" />
-        </div>
+                <div class="mb-3">
+                    <label for="titulo" class="form-label">Título</label>
+                    <InputText id="titulo" class="form-control" @bind-Value="novaTarefa.Titulo" />
+                </div>
 
-        <div class="mb-3">
-            <label for="descricao" class="form-label">Descrição</label>
-            <InputTextArea id="descricao" class="form-control" @bind-Value="novaTarefa.Descricao" />
-        </div>
+                <div class="mb-3">
+                    <label for="descricao" class="form-label">Descrição</label>
+                    <InputTextArea id="descricao" class="form-control" @bind-Value="novaTarefa.Descricao" />
+                </div>
 
-        <div class="mb-3">
-            <label for="dataEntrega" class="form-label">Data de Entrega</label>
-            <InputDate id="dataEntrega" class="form-control" @bind-Value="novaTarefa.DataEntrega" />
-        </div>
+                <div class="mb-3">
+                    <label for="dataEntrega" class="form-label">Data de Entrega</label>
+                    <InputDate id="dataEntrega" class="form-control" @bind-Value="novaTarefa.DataEntrega" />
+                </div>
 
-        <div class="mb-3">
-            <label for="responsavel" class="form-label">Responsável</label>
-            <InputSelect id="responsavel" class="form-select" @bind-Value="novaTarefa.ResponsavelId">
-                <option value="">Selecione...</option>
-                @foreach (var user in usuarios)
-                {
-                    <option value="@user.Id">@user.Username</option>
-                }
-            </InputSelect>
-        </div>
+                <div class="mb-3">
+                    <label for="responsavel" class="form-label">Responsável</label>
+                    <InputSelect id="responsavel" class="form-select" @bind-Value="novaTarefa.ResponsavelId">
+                        <option value="">Selecione...</option>
+                        @foreach (var user in usuarios)
+                        {
+                            <option value="@user.Id">@user.Username</option>
+                        }
+                    </InputSelect>
+                </div>
 
-        <div class="mb-3">
-            <label for="dificuldade" class="form-label">Dificuldade</label>
-            <InputSelect id="dificuldade" class="form-select" @bind-Value="novaTarefa.Dificuldade">
-                <option value="">Selecione a dificuldade</option>
-                <option value="Baixa">Baixa</option>
-                <option value="Média">Média</option>
-                <option value="Alta">Alta</option>
-            </InputSelect>
-        </div>
+                <div class="mb-4">
+                    <label for="dificuldade" class="form-label">Dificuldade</label>
+                    <InputSelect id="dificuldade" class="form-select" @bind-Value="novaTarefa.Dificuldade">
+                        <option value="">Selecione a dificuldade</option>
+                        <option value="Baixa">Baixa</option>
+                        <option value="Média">Média</option>
+                        <option value="Alta">Alta</option>
+                    </InputSelect>
+                </div>
 
-        <button class="btn btn-success" type="submit">Criar Tarefa</button>
-    </EditForm>
-}
+                <button class="btn btn-success w-100 fw-bold" type="submit">Criar Tarefa</button>
+            </EditForm>
+        }
+    </div>
+</div>
 
 @code {
     private Tarefa novaTarefa = new()
         {
-            Concluida = false // valor padrão
+            Concluida = false
         };
 
     private List<Usuario> usuarios = new();
@@ -75,7 +79,7 @@ else
             return;
         }
 
-        usuarios = await AuthService.GetUsuariosAsync(); // método que vamos criar
+        usuarios = await AuthService.GetUsuariosAsync();
         carregado = true;
     }
 
@@ -91,7 +95,4 @@ else
             await JS.InvokeVoidAsync("alert", "Erro ao criar tarefa.");
         }
     }
-
-    [Inject] IJSRuntime JS { get; set; }
 }
-

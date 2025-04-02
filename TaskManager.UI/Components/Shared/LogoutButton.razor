@@ -3,14 +3,14 @@
 @inject NavigationManager Navigation
 @inject AppState AppState
 
-<button class="nav-link btn btn-link text-start w-100" @onclick="Logout">
-    <span class="bi bi-box-arrow-right" aria-hidden="true"></span> Sair
+<button class="btn btn-danger d-flex align-items-center gap-2 w-100 px-4 fw-bold" @onclick="Logout">
+    <i class="bi bi-box-arrow-left"></i>
+    <span class="text-white fw-semibold">Sair</span>
 </button>
 
 @code {
     private void Logout()
     {
-        Console.WriteLine("Logout chamado.");
         AppState.LimparUsuario();
         AppState.SetAuthentication(false);
         Navigation.NavigateTo("/", forceLoad: true);

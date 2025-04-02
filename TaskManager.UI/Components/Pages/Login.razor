@@ -5,27 +5,30 @@
 @inject AuthService AuthService
 @inject AppState appState
 
-<h3>Login</h3>
+<div class="d-flex justify-content-center align-items-center vh-100 bg-light">
+    <div class="card shadow p-5" style="width: 100%; max-width: 480px;">
+        <h3 class="text-start text-muted mb-4 tw-bold">Login</h3>
 
-@if (!string.IsNullOrEmpty(ErrorMessage))
-{
-    <div class="alert alert-danger">@ErrorMessage</div>
-}
+        @if (!string.IsNullOrEmpty(ErrorMessage))
+        {
+            <div class="alert alert-danger">@ErrorMessage</div>
+        }
 
-<div class="container mt-4">
-    <div class="form-group">
-        <label>Usuário</label>
-        <input class="form-control" @bind="Username" />
+        <div class="form-group mb-3">
+            <label>Usuário</label>
+            <input class="form-control" @bind="Username" />
+        </div>
+
+        <div class="form-group mb-4">
+            <label>Senha</label>
+            <input type="password" class="form-control" @bind="Password" />
+        </div>
+
+        <button class="btn btn-primary w-100 fw-bold" @onclick="LoginUsuario">Entrar</button>
     </div>
-    <div class="form-group">
-        <label>Senha</label>
-        <input type="password" class="form-control" @bind="Password" />
-    </div>
-    <button class="btn btn-primary mt-2" @onclick="LoginUsuario">Entrar</button>
 </div>
 
 @code {
-	
     private string Username;
     private string Password;
     private string ErrorMessage;
@@ -44,8 +47,8 @@
 
         if (usuario != null)
         {
-            appState.SetUsuario(usuario); // ← agora salva ID, nome, etc.
-            Navigation.NavigateTo("/tarefas");
+            appState.SetUsuario(usuario);
+            Navigation.NavigateTo("/tarefas", forceLoad: true);
         }
         else
         {

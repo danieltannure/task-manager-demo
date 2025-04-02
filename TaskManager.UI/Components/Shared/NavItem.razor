@@ -1,0 +1,17 @@
+﻿@using Microsoft.AspNetCore.Components
+@rendermode InteractiveServer
+@inject NavigationManager Navigation
+
+<button class="btn btn-primary mx-auto d-flex align-items-center gap-2 mb-2 py-2 fw-bold" style="width:100%;"
+        @onclick="() => Navigation.NavigateTo(Href)">
+    <i class="@Icon ms-2"></i>
+    @Text
+</button>
+
+
+@code {
+    [Parameter] public string Href { get; set; }
+    [Parameter] public string Text { get; set; }
+    [Parameter] public string Icon { get; set; }
+    [Parameter] public NavLinkMatch Match { get; set; } = NavLinkMatch.Prefix;
+}

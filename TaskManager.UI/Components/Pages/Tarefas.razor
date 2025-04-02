@@ -5,8 +5,9 @@
 @inject AuthService AuthService
 @inject NavigationManager Navigation
 @inject AppState AppState
+@inject IJSRuntime JS
 
-<h3>Lista de Tarefas</h3>
+<h2 class="fw-bold text-muted mb-4">Lista de Tarefas</h2>
 
 @if (!carregado)
 {
@@ -14,16 +15,13 @@
 }
 else
 {
-    <div class="row mb-3">
-        <div class="col-md-4 mb-2">
-            <input type="text"
-            class="form-control"
-            placeholder="Buscar por título..."
-            @bind-value="termoBusca"
-            @bind-value:event="oninput" />
+    <!-- Filtros -->
+    <div class="d-flex flex-wrap gap-2 w-100 mb-4">
+        <div class="flex-fill" style="min-width: 120px;">
+            <input type="text" class="form-control" placeholder="Buscar por título..."
+                   @bind-value="termoBusca" @bind-value:event="oninput" />
         </div>
-
-        <div class="col-md-3 mb-2">
+        <div class="flex-fill" style="min-width: 120px;">
             <select class="form-select" @bind="filtroDificuldade">
                 <option value="">Todas as dificuldades</option>
                 <option value="Baixa">Baixa</option>
@@ -31,16 +29,14 @@ else
                 <option value="Alta">Alta</option>
             </select>
         </div>
-
-        <div class="col-md-3 mb-2">
+        <div class="flex-fill" style="min-width: 120px;">
             <select class="form-select" @bind="filtroStatus">
                 <option value="">Todos os status</option>
                 <option value="pendente">Pendente</option>
                 <option value="concluida">Concluída</option>
             </select>
         </div>
-
-        <div class="col-md-4 mb-2">
+        <div class="flex-fill" style="min-width: 120px;">
             <select class="form-select" @bind="filtroResponsavelId">
                 <option value="0">Todos os responsáveis</option>
                 @foreach (var user in usuarios)
@@ -49,7 +45,6 @@ else
                 }
             </select>
         </div>
-
     </div>
 
     @if (!TarefasFiltradas.Any())
@@ -62,28 +57,51 @@ else
             @foreach (var tarefa in TarefasFiltradas)
             {
                 var tarefaId = $"tarefa-{tarefa.Id}";
+                var responsavel = usuarios.FirstOrDefault(u => u.Id == tarefa.ResponsavelId)?.Username ?? "Não atribuído";
                 var isEditando = tarefaEditando?.Id == tarefa.Id;
 
-                <div class="accordion-item mb-2">
+                <div class="accordion-item mb-3">
                     <h2 class="accordion-header" id="@($"{tarefaId}-header")">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div class="form-check ms-3">
-                                <input class="form-check-input"
-                                       type="checkbox"
-                                       checked="@tarefa.Concluida"
-                                       @onchange="(e => AlterarStatusTarefa(tarefa, e.Value))"
-                                       disabled="@(AppState.IsAdmin == false)" />
-                                <label class="form-check-label fw-bold">
-                                    @tarefa.Titulo
-                                </label>
+                        <div class="d-flex flex-column p-3">
+
+                            <!-- Bloco: Checkbox + Título e Ver Detalhes -->
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div class="d-flex align-items-center gap-3">
+                                    <input class="form-check-input mt-0" type="checkbox"
+                                           checked="@tarefa.Concluida"
+                                           @onchange="(e => AlterarStatusTarefa(tarefa, e.Value))"
+                                           disabled="@(AppState.IsAdmin == false)" />
+                                    <label class="fw-bold fs-3 text-dark mb-0" style="opacity: 1;">
+                                        @tarefa.Titulo
+                                    </label>
+                                </div>
+
+                                <button class="btn btn-outline-secondary btn-sm" type="button"
+                                        data-bs-toggle="collapse"
+                                        data-bs-target="#@($"{tarefaId}-body")"
+                                        aria-expanded="false"
+                                        aria-controls="@($"{tarefaId}-body")">
+                                    Ver detalhes
+                                </button>
                             </div>
-                            <button class="accordion-button collapsed w-50" type="button" data-bs-toggle="collapse" data-bs-target="#@($"{tarefaId}-body")" aria-expanded="false" aria-controls="@($"{tarefaId}-body")">
-                                Ver detalhes
-                            </button>
+
+                            <!-- Rodapé -->
+                            <div class="d-flex justify-content-between text-muted fs-5 px-1 mt-2 mb-2">
+                                <span>
+                                    <span class="badge @ObterClasseDificuldade(tarefa.Dificuldade)">
+                                        @tarefa.Dificuldade
+                                    </span>
+                                </span>
+                                <span><strong>Data:</strong> @(tarefa.DataEntrega?.ToString("dd/MM/yyyy") ?? "Não definida")</span>
+                                <span><strong>Responsável:</strong> @responsavel</span>
+                            </div>
                         </div>
                     </h2>
 
-                    <div id="@($"{tarefaId}-body")" class="accordion-collapse collapse" aria-labelledby="@($"{tarefaId}-header")" data-bs-parent="#accordionTarefas">
+                    <!-- Conteúdo Expandido -->
+                    <div id="@($"{tarefaId}-body")" class="accordion-collapse collapse"
+                         aria-labelledby="@($"{tarefaId}-header")"
+                         data-bs-parent="#accordionTarefas">
                         <div class="accordion-body">
                             @if (isEditando)
                             {
@@ -104,30 +122,21 @@ else
                                         <label>Data de Entrega:</label>
                                         <input type="date" class="form-control" @bind="tarefaEditando.DataEntrega" />
                                     </div>
-                                    <div class="form-check mb-3">
-                                        <input class="form-check-input" type="checkbox" @bind="tarefaEditando.Concluida" />
-                                        <label class="form-check-label">Concluída</label>
-                                    </div>
 
-                                    @if (AppState.IsAdmin)
-                                    {
-                                        <button class="btn btn-success me-2" @onclick="SalvarEdicao">Salvar</button>
-                                        <button class="btn btn-secondary" @onclick="CancelarEdicao">Cancelar</button>
-                                    }
+                                    <button class="btn btn-success me-2" @onclick="SalvarEdicao">Salvar</button>
+                                    <button class="btn btn-secondary" @onclick="CancelarEdicao">Cancelar</button>
                                 </div>
                             }
                             else
                             {
-                                <p><strong>Descrição:</strong> @tarefa.Descricao</p>
-                                <p><strong>Data de Entrega:</strong> @(tarefa.DataEntrega?.ToString("dd/MM/yyyy") ?? "Não definida")</p>
-                                <p><strong>Dificuldade:</strong> @tarefa.Dificuldade</p>
-
-                                @if (AppState.IsAdmin)
-                                {
-                                    <button class="btn btn-outline-primary me-2" @onclick="@(() => EditarTarefa(tarefa))">Editar</button>
-                                }
-
-                                <button class="btn btn-outline-danger" @onclick="@(() => ApagarTarefa(tarefa.Id))">Apagar</button>
+                                <p>@tarefa.Descricao</p>
+                                <div class="d-flex gap-2 mt-3">
+                                    @if (AppState.IsAdmin)
+                                    {
+                                        <button class="btn btn-outline-primary" @onclick="@(() => EditarTarefa(tarefa))">Editar</button>
+                                    }
+                                    <button class="btn btn-outline-danger" @onclick="@(() => ApagarTarefa(tarefa.Id))">Apagar</button>
+                                </div>
                             }
                         </div>
                     </div>
@@ -137,7 +146,7 @@ else
 
         @if (AppState.IsAdmin)
         {
-            <div class="mt-3">
+            <div class="mt-4">
                 <button class="btn btn-success" @onclick="SalvarAlteracoesConcluidas" disabled="@(!tarefasModificadas.Any())">
                     Salvar Alterações
                 </button>
@@ -148,124 +157,26 @@ else
 
 @code {
     private List<Tarefa> tarefas = new();
+    private List<Usuario> usuarios = new();
     private bool carregado = false;
 
-    //Edições (admin)
-    private Tarefa? tarefaEditando;
-    private List<Tarefa> tarefasModificadas = new();
-    private void EditarTarefa(Tarefa tarefa)
-    {
-        tarefaEditando = new Tarefa
-            {
-                Id = tarefa.Id,
-                Titulo = tarefa.Titulo,
-                Descricao = tarefa.Descricao,
-                Dificuldade = tarefa.Dificuldade,
-                DataEntrega = tarefa.DataEntrega,
-                Concluida = tarefa.Concluida,
-                ResponsavelId = tarefa.ResponsavelId
-            };
-    }
-
-    private void CancelarEdicao()
-    {
-        tarefaEditando = null;
-    }
-
-    private async Task SalvarEdicao()
-    {
-        if (tarefaEditando is not null)
-        {
-            var sucesso = await AuthService.UpdateTarefaAsync(tarefaEditando);
-
-            if (sucesso)
-            {
-                // Atualiza a tarefa na lista local
-                var index = tarefas.FindIndex(t => t.Id == tarefaEditando.Id);
-                if (index >= 0)
-                {
-                    tarefas[index] = tarefaEditando;
-                }
-
-                tarefaEditando = null;
-            }
-            else
-            {
-                await JS.InvokeVoidAsync("alert", "Erro ao salvar tarefa.");
-            }
-        }
-    }
-
-    private async Task ApagarTarefa(int id)
-    {
-        var confirmar = await JS.InvokeAsync<bool>("confirm", "Tem certeza que deseja apagar esta tarefa?");
-        if (confirmar)
-        {
-            var sucesso = await AuthService.DeleteTarefaAsync(id);
-
-            if (sucesso)
-            {
-                tarefas = tarefas.Where(t => t.Id != id).ToList();
-            }
-            else
-            {
-                await JS.InvokeVoidAsync("alert", "Erro ao apagar tarefa.");
-            }
-        }
-    }
-
-    private void AlterarStatusTarefa(Tarefa tarefa, object? valor)
-    {
-        if (valor is bool novaConclusao)
-        {
-            tarefa.Concluida = novaConclusao;
-
-            if (!tarefasModificadas.Any(t => t.Id == tarefa.Id))
-            {
-                tarefasModificadas.Add(tarefa);
-            }
-        }
-    }
-
-    private async Task SalvarAlteracoesConcluidas()
-    {
-        bool erro = false;
-
-        foreach (var tarefa in tarefasModificadas)
-        {
-            var sucesso = await AuthService.UpdateTarefaAsync(tarefa);
-            if (!sucesso)
-            {
-                erro = true;
-            }
-        }
-
-        tarefasModificadas.Clear();
-
-        if (erro)
-            await JS.InvokeVoidAsync("alert", "Algumas alterações não foram salvas.");
-        else
-            await JS.InvokeVoidAsync("alert", "Alterações salvas com sucesso.");
-    }
-
-
-    //Filtros
     private string filtroDificuldade = string.Empty;
     private string filtroStatus = string.Empty;
     private int filtroResponsavelId = 0;
-    private List<Usuario> usuarios = new();
     private string termoBusca = string.Empty;
 
-    private IEnumerable<Tarefa> TarefasFiltradas =>
-    tarefas.Where(t =>
-        (string.IsNullOrWhiteSpace(termoBusca) || t.Titulo.Contains(termoBusca, StringComparison.OrdinalIgnoreCase)) &&
-        (string.IsNullOrWhiteSpace(filtroDificuldade) || t.Dificuldade.Equals(filtroDificuldade, StringComparison.OrdinalIgnoreCase)) &&
-        (string.IsNullOrWhiteSpace(filtroStatus) ||
-            (filtroStatus == "concluida" && t.Concluida) ||
-            (filtroStatus == "pendente" && !t.Concluida)) &&
-        (filtroResponsavelId == 0 || t.ResponsavelId == filtroResponsavelId)
-    );
+    private Tarefa? tarefaEditando;
+    private List<Tarefa> tarefasModificadas = new();
 
+    private IEnumerable<Tarefa> TarefasFiltradas =>
+        tarefas.Where(t =>
+            (string.IsNullOrWhiteSpace(termoBusca) || t.Titulo.Contains(termoBusca, StringComparison.OrdinalIgnoreCase)) &&
+            (string.IsNullOrWhiteSpace(filtroDificuldade) || t.Dificuldade.Equals(filtroDificuldade, StringComparison.OrdinalIgnoreCase)) &&
+            (string.IsNullOrWhiteSpace(filtroStatus) ||
+                (filtroStatus == "concluida" && t.Concluida) ||
+                (filtroStatus == "pendente" && !t.Concluida)) &&
+            (filtroResponsavelId == 0 || t.ResponsavelId == filtroResponsavelId)
+        );
 
     protected override async Task OnInitializedAsync()
     {
@@ -281,5 +192,100 @@ else
         carregado = true;
     }
 
-    [Inject] IJSRuntime JS { get; set; }
+    private void EditarTarefa(Tarefa tarefa)
+    {
+        tarefaEditando = new Tarefa
+            {
+                Id = tarefa.Id,
+                Titulo = tarefa.Titulo,
+                Descricao = tarefa.Descricao,
+                Dificuldade = tarefa.Dificuldade,
+                DataEntrega = tarefa.DataEntrega,
+                Concluida = tarefa.Concluida,
+                ResponsavelId = tarefa.ResponsavelId
+            };
+    }
+
+    private void CancelarEdicao() => tarefaEditando = null;
+
+    private async Task SalvarEdicao()
+    {
+        if (tarefaEditando is not null)
+        {
+            var sucesso = await AuthService.UpdateTarefaAsync(tarefaEditando);
+            if (sucesso)
+            {
+                var index = tarefas.FindIndex(t => t.Id == tarefaEditando.Id);
+                if (index >= 0)
+                    tarefas[index] = tarefaEditando;
+
+                tarefaEditando = null;
+            }
+            else
+                await JS.InvokeVoidAsync("alert", "Erro ao salvar tarefa.");
+        }
+    }
+
+    private async Task ApagarTarefa(int id)
+    {
+        var confirmar = await JS.InvokeAsync<bool>("confirm", "Tem certeza que deseja apagar esta tarefa?");
+        if (confirmar)
+        {
+            var sucesso = await AuthService.DeleteTarefaAsync(id);
+            if (sucesso)
+                tarefas = tarefas.Where(t => t.Id != id).ToList();
+            else
+                await JS.InvokeVoidAsync("alert", "Erro ao apagar tarefa.");
+        }
+    }
+
+    private void AlterarStatusTarefa(Tarefa tarefa, object? valor)
+    {
+        if (valor is bool novaConclusao)
+        {
+            tarefa.Concluida = novaConclusao;
+
+            if (novaConclusao)
+            {
+                tarefa.DataEntrega = DateTime.Now; 
+            }
+            else
+            {
+                tarefa.DataEntrega = null; 
+            }
+
+            if (!tarefasModificadas.Any(t => t.Id == tarefa.Id))
+            {
+                tarefasModificadas.Add(tarefa);
+            }
+        }
+    }
+
+
+    private async Task SalvarAlteracoesConcluidas()
+    {
+        bool erro = false;
+
+        foreach (var tarefa in tarefasModificadas)
+        {
+            var sucesso = await AuthService.UpdateTarefaAsync(tarefa);
+            if (!sucesso) erro = true;
+        }
+
+        tarefasModificadas.Clear();
+
+        if (erro)
+            await JS.InvokeVoidAsync("alert", "Algumas alterações não foram salvas.");
+        else
+            await JS.InvokeVoidAsync("alert", "Alterações salvas com sucesso.");
+    }
+
+    private string ObterClasseDificuldade(string dificuldade) =>
+        dificuldade.ToLower() switch
+        {
+            "baixa" => "bg-success text-white",
+            "média" => "bg-warning text-dark",
+            "alta" => "bg-danger text-white",
+            _ => "bg-secondary text-white"
+        };
 }
